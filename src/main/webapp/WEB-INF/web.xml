@@ -5,7 +5,7 @@
 	version="3.0" metadata-complete="true">
 	<servlet>
 		<servlet-name>api</servlet-name>
-		<servlet-class>servletjsonrpc.RPCServlet</servlet-class>
+		<servlet-class>simplejsonrpc.server.RPCServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>api</servlet-name>

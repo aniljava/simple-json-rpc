@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
-
 public class RPCServlet extends HttpServlet {
 
 	private static final long	serialVersionUID	= 1L;
@@ -32,7 +31,7 @@ public class RPCServlet extends HttpServlet {
 
 		Object service = getService(serviceName);
 		if (service == null) {
-			response.sendError(500,"Service Not Found");
+			response.sendError(500, "Service Not Found");
 			return;
 		}
 
@@ -48,44 +47,38 @@ public class RPCServlet extends HttpServlet {
 				return;
 			}
 		}
-		
-		
 
 		// Not an inative now.
 		final String methodName = request.getParameter("method");
 		final String arguments = request.getParameter("arguments");
-		
-		if(methodName == null){
+
+		if (methodName == null) {
 			response.sendError(500, "Method Name Missing");
 			return;
 		}
 
-		
-		Object[] 	argObjs = null;
+		Object[] argObjs = null;
 
-		
-		
 		/**
-		 * Arguments needs to be any of the following.
-		 * 1. List containing arguments
-		 * 2. Object other than list
-		 * 3. Null for empty
+		 * Arguments needs to be any of the following. 1. List containing
+		 * arguments 2. Object other than list 3. Null for empty
 		 * 
-		 * Method with one List argument need to pass argument as List containig one list.
+		 * Method with one List argument need to pass argument as List containig
+		 * one list.
 		 */
-		
-		Class[] 	argTypes = new Class[0]; // Either null or array of atleast one element.
-		
-		
-		if(arguments != null){
+
+		Class[] argTypes = new Class[0]; // Either null or array of atleast one
+											// element.
+
+		if (arguments != null) {
 			Object obj = getObject(arguments);
-			if(obj != null){				
-				if(obj instanceof List){
-					
+			if (obj != null) {
+				if (obj instanceof List) {
+
 					ArrayList<Class> argClasses = new ArrayList<Class>();
 					ArrayList<Object> argObjects = new ArrayList<Object>();
 
-					if(obj != null && obj instanceof List){
+					if (obj != null && obj instanceof List) {
 						List list = (List) obj;
 						for (Object p : list) {
 							if (p == null) {
@@ -100,23 +93,19 @@ public class RPCServlet extends HttpServlet {
 						argTypes = argClasses.toArray(new Class[argClasses.size()]);
 						argObjs = argObjects.toArray();
 					}
-				}else{
-					argTypes = new Class[]{obj.getClass()};		
-					argObjs  = new Object[]{obj};
+				} else {
+					argTypes = new Class[] { obj.getClass() };
+					argObjs = new Object[] { obj };
 				}
 			}
 		}
-		
-		
-		
-		
 
 		// Create signatures and put in cache.
 
 		Method method = null;
 		boolean longform = false;
-		try {			
-			method = service.getClass().getMethod(methodName, argTypes);			
+		try {
+			method = service.getClass().getMethod(methodName, argTypes);
 		} catch (Exception ex) {
 			// Try long form
 			Class[] extended = new Class[argTypes.length + 3];
@@ -132,7 +121,7 @@ public class RPCServlet extends HttpServlet {
 				response.sendError(500, "Problem obtaining specified method");
 				return;
 			}
-		}	
+		}
 
 		Object result = null;
 
@@ -151,7 +140,7 @@ public class RPCServlet extends HttpServlet {
 			}
 
 		} else {
-			try {				
+			try {
 				result = method.invoke(service, argObjs);
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -171,7 +160,7 @@ public class RPCServlet extends HttpServlet {
 
 	private Object getService(String name) {
 		Object command = commandsCache.get(name);
-		
+
 		if (command == null) {
 			if (commandsCache.containsKey(command)) // Peviously checked.
 				return null;
