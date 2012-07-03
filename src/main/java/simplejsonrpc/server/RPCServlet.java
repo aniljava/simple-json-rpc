@@ -29,7 +29,7 @@ public class RPCServlet extends HttpServlet {
 			return;
 		}
 
-		Object service = getService(serviceName);
+		Object service = getService(getServletContext(), serviceName);
 		if (service == null) {
 			response.sendError(500, "Service Not Found");
 			return;
@@ -84,7 +84,17 @@ public class RPCServlet extends HttpServlet {
 							if (p == null) {
 								argClasses.add(Object.class);
 							} else {
-								argClasses.add(p.getClass());
+								if(p instanceof List){
+									argClasses.add(List.class);
+								}else if(p instanceof Map){
+									argClasses.add(Map.class);
+								}else{
+									argClasses.add(p.getClass());	
+								}
+								
+								
+								
+								
 							}
 
 							argObjects.add(p);
@@ -94,12 +104,25 @@ public class RPCServlet extends HttpServlet {
 						argObjs = argObjects.toArray();
 					}
 				} else {
-					argTypes = new Class[] { obj.getClass() };
+
+					if (obj instanceof List) {
+						argTypes = new Class[] { List.class };
+					} else if (obj instanceof Map) {
+						argTypes = new Class[] { Map.class };
+					} else {
+						argTypes = new Class[] { obj.getClass() };
+					}
+
 					argObjs = new Object[] { obj };
 				}
 			}
 		}
-
+		
+		
+		
+		for (Class c : argTypes) {
+			System.out.println("ARGS: " + c);
+		}
 		// Create signatures and put in cache.
 
 		Method method = null;
@@ -158,7 +181,7 @@ public class RPCServlet extends HttpServlet {
 
 	final Map<String, Object>	commandsCache	= new HashMap<>();
 
-	private Object getService(String name) {
+	private Object getService(ServletContext context, String name) {
 		Object command = commandsCache.get(name);
 
 		if (command == null) {
@@ -169,6 +192,11 @@ public class RPCServlet extends HttpServlet {
 				Class clazz = Class.forName(name);
 				command = clazz.newInstance();
 
+				try {
+					Method method = command.getClass().getMethod("init", ServletContext.class);
+					method.invoke(command, context);
+				} catch (Exception ex) {}
+
 				commandsCache.put(name, command);
 
 			} catch (Exception e) {
@@ -176,6 +204,7 @@ public class RPCServlet extends HttpServlet {
 				return null;
 			}
 		}
+
 		return command;
 	}
 
