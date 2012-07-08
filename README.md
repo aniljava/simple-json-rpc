@@ -1,44 +1,17 @@
-simple JSON RPC using Servlet and POJO.
---------------------------------------------
+Simple JSON / Servlet RPC
+------------------------------------------------------------------------------
 
-#### Serverside
-Server side consists of a Servlet accepting a call at an uri. Services are plain java object without any framework dependencies. They can optionally make use of
-Servlet Context, Request and Response objects.
-
-#### Clientside
-Plain java or curl/wget to uri with parameters. A Helper class "Client" is available that uses HTTP Components to make connections to remote servers.
+Simple Servlet, JSON and Java Reflection based RPC Mechanism. This project provides
+dispatcher servlet and helper api to call remote services.
 
 
-#### Limitations
-- No Exceptions over RPC
-- POJO can only have primitive arguments on service methods
-- No inbuilt authentication, use Servlet specification instead.
+SERVER SIDE
+------------------------------------------------------------------------------
 
+At the server side of the RPC, A servlet listens to a path usually `host/api`
 
-#### Example
-	
-	--- Service	
-	public class Calculator{
-		public int add(int i, int j){
-			return i+j;
-		}
-		
-		//Example with different return type
-		public String upperCase(String str){
-			return str.toUpperCase();
-		}
-			
-	}
-	
-	--- Client	
-	Client client = new Client("http://SERVICE_URL");
-	
-	int result = client.call("Calculator").fn("add").invoke(2,3);
-	String result1 = client.call("Calculator").fn("upperCase").invoke("example text");
-	
+Example configuration on web.xml is 
 
-	--- Configuration, before client can make a call you need a running servlet container at SERVICE_URL with RPCServlet running.
-	
 	<servlet>
 		<servlet-name>api</servlet-name>
 		<servlet-class>simplejsonrpc.server.RPCServlet</servlet-class>
@@ -48,12 +21,58 @@ Plain java or curl/wget to uri with parameters. A Helper class "Client" is avail
 		<url-pattern>/api</url-pattern>
 	</servlet-mapping>
 
+`RPCServlet takes three parameters, [1. service , 2.method, 3.arguments ]
+
+`service` is the full class name of the service, it needs to be in same class
+path as that of RPCServlet, usually deployed as a jar file in `WEB-INF/lib`
+folder. It is the only required parameter.
+
+If any class implementing INative exists, it will be initiated(Only once in
+lifetime) and it's serve method is called.
+
+If not, if class with name passed in `service` is looked and loaded if exists.
+Appropriate method is looked and called according to the method and parameters
+values.
+
+#### Example Service
+	package example;
+
+	public class Calculator{
+		public int add(int i, int j){
+			return i+j;
+	}
+
+Calculator.class needs to be present in webapp classpath.
 
 
-#### NOTES
-- See pom.xml for dependencies.
+CLIENT SIDE
+------------------------------------------------------------------------------
 
-#### TODO
-- List as argument
-- Prefix based filtering of services, currently it executes anything in the classpath.
-- Better documentation of the archetecture
+Plain java or curl/wget to uri with parameters. A Helper class "Client" is
+available that uses HTTP Components to make connections to remote servers.
+
+	Client client = new Client("http://SERVICE_URL");	
+	int result = client.call("example.Calculator").fn("add").invoke(2,3);
+	
+Same thing can be executed as
+	http://SERVICE_URL?service=example.Calculator&method=add&arguments=[1,2]
+
+See `INative`, `simplejsonrpc.example` package
+
+
+for example, if add method is not found on above example, method with
+following signature is searched.
+
+	public int add(ServletContext sc, HttpServletRequest req, HttpServletResponse res)
+
+
+
+
+NOTES, TODO and LIMITATIONS
+------------------------------------------------------------------------------
+- No Exceptions over RPC
+- POJO can only have primitive arguments on service methods
+- No inbuilt authentication, use Servlet specification instead.
+- pom.xml has list of depenencies
+- @TODO List as Argument
+- @TODO Prefix based filtering of services, currently exposes entire classpath
