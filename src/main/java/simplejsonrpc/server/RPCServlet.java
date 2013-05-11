@@ -213,24 +213,12 @@ public class RPCServlet extends HttpServlet {
 		doGet(req, resp);
 	}
 
-	public static void writeResult(HttpServletResponse response, Object... kvs) throws IOException {
+	public static void writeResult(HttpServletResponse response, Object obj) throws IOException {
 		final PrintWriter out = response.getWriter();
-		final Map result = new HashMap();
 
-		Object key = null;
-		Object value = null;
-		for (Object obj : kvs) {
-			if (key == null) {
-				key = obj;
-			} else {
-				value = obj;
-				result.put(key, value);
-				key = null;
-				value = null;
-			}
-		}
-
-		out.write(getJSON(result));
+		out.write(getJSON(obj));
+		out.flush();
+		out.close();
 	}
 
 	public static final ObjectMapper	OBJECT_MAPPER	= new ObjectMapper();
